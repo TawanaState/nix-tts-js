@@ -97,6 +97,11 @@ export class NixTTS {
         const z = encoderResults.z;
         const d_rounded = encoderResults.d_rounded;
 
+        console.log("mu_z", mu_z);
+        console.log("logsig_z", logsig_z);
+        console.log("z", z);
+        console.log("d_rounded", d_rounded);
+
         // Create masks for the decoder input
         const y_max_length = d_rounded.dims[1];
         const y_lengths = d_rounded.data.reduce((a, b) => a + b, 0);
