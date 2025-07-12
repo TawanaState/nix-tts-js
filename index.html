@@ -9,14 +9,9 @@
     <button id="synthesize-button">Synthesize</button>
     <br><br>
     <audio id="audio-output" controls></audio>
-
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/phonemizer@1.0.1/dist/phonemizer.min.js"></script>
-    <script src="nix-tts.js"></script>
-
-    <script>
-        // Run the tokenizer test when the page loads
-        testTokenizer();
+    <script type="module">
+        import * as tts from './nix-tts.js';
 
         document.getElementById('synthesize-button').addEventListener('click', async () => {
             const text = document.getElementById('text-input').value;
@@ -27,15 +22,15 @@
 
             // Placeholder URLs for the models
             const modelUrls = {
-                encoder: 'https://example.com/encoder.onnx',
-                decoder: 'https://example.com/decoder.onnx'
+                encoder: '/model/encoder.onnx',
+                decoder: '/model/decoder.onnx'
             };
 
             try {
-                const nixTTS = new NixTTS(modelUrls, TOKENIZER_STATE);
+                const nixTTS = new tts.NixTTS(modelUrls, tts.TOKENIZER_STATE);
                 await nixTTS.init();
                 const audioData = await nixTTS.vocalize(text);
-                playAudio(audioData);
+                tts.playAudio(audioData);
             } catch (error) {
                 console.error('Error during TTS synthesis:', error);
                 alert('An error occurred during synthesis. See the console for details.');
