@@ -90,12 +90,10 @@ export class NixTTS {
             c_lengths: c_lengths
         };
         const encoderResults = await this.encoder.run(encoderFeeds);
-        console.log('encoderResults', encoderResults)
+
         // Extract encoder outputs
-        const mu_z = encoderResults.mu_z;
-        const logsig_z = encoderResults.logsig_z;
-        const z = encoderResults.z;
-        const d_rounded = encoderResults.duration_rounded;
+        const z = encoderResults['z'];
+        const d_rounded = encoderResults['duration_rounded'];
 
         // Create masks for the decoder input
         const y_max_length = d_rounded.dims[2];
@@ -111,8 +109,8 @@ export class NixTTS {
 
         // Run the decoder model
         const decoderFeeds = {
-            x: z,
-            x_masks: x_masks,
+            x: encoderResults['z'],
+            x_masks: encoderResults['x_masks'],
             g: g,
         };
         const decoderResults = await this.decoder.run(decoderFeeds);
