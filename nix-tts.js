@@ -79,11 +79,10 @@ export class NixTTS {
     async vocalize(text, sid) {
         // Tokenize the input text
         const [tokens, tokenLengths, phonemes] = await this.tokenizer.tokenize([text]);
-        const flattenedTokens = tokens.flat();
-        const maxTokenLength = flattenedTokens.length / tokens.length;
-
-        // Create input tensors for the encoder
-        const c = new ort.Tensor('int64', BigInt64Array.from(flattenedTokens.map(BigInt)), [tokens.length, maxTokenLength]);
+        const [paddedTokens, tokensLengths] = await this.tokenizer.tokenize([text]);
+        const maxTokenLength = paddedTokens[0].length;
+        const flattenedTokens = paddedTokens.flat();
+        const c = new ort.Tensor('int64', BigInt64Array.from(flattenedTokens.map(BigInt)), [paddedTokens.length, maxTokenLength]);
         const c_lengths = new ort.Tensor('int64', BigInt64Array.from(tokenLengths.map(BigInt)), [tokenLengths.length]);
         // Run the encoder model
         const encoderFeeds = {
@@ -99,16 +98,16 @@ export class NixTTS {
         const d_rounded = encoderResults.d_rounded;
 
         // Create masks for the decoder input
-        const y_max_length = d_rounded.dims[2];
+        const y_max_length = d_rounded.dims[1];
         const y_lengths = d_rounded.data.reduce((a, b) => a + b, 0);
         const x_masks = new ort.Tensor(
             'bool',
-            Array(y_max_length).fill(true),
-            [1, 1, y_max_length]
+            Array(y_lengths).fill(true),
+            [1, 1, y_lengths]
         );
 
         // Create speaker embedding tensor
-        const g = new ort.Tensor('int64', BigInt64Array.from([BigInt(sid)]), [1]);
+        const g = new ort.Tensor('int64', BigInt64Array.from([BigInt(sid)]));
 
         // Run the decoder model
         const decoderFeeds = {
