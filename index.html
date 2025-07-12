@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nix-TTS in JavaScript</title>
+</head>
+<body>
+    <h1>Nix-TTS in JavaScript</h1>
+    <input type="text" id="text-input" placeholder="Enter text to synthesize..." size="50">
+    <button id="synthesize-button">Synthesize</button>
+    <br><br>
+    <audio id="audio-output" controls></audio>
+
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phonemizer@1.0.1/dist/phonemizer.min.js"></script>
+    <script src="nix-tts.js"></script>
+
+    <script>
+        // Run the tokenizer test when the page loads
+        testTokenizer();
+
+        document.getElementById('synthesize-button').addEventListener('click', async () => {
+            const text = document.getElementById('text-input').value;
+            if (!text) {
+                alert('Please enter some text.');
+                return;
+            }
+
+            // Placeholder URLs for the models
+            const modelUrls = {
+                encoder: 'https://example.com/encoder.onnx',
+                decoder: 'https://example.com/decoder.onnx'
+            };
+
+            try {
+                const nixTTS = new NixTTS(modelUrls, TOKENIZER_STATE);
+                await nixTTS.init();
+                const audioData = await nixTTS.vocalize(text);
+                playAudio(audioData);
+            } catch (error) {
+                console.error('Error during TTS synthesis:', error);
+                alert('An error occurred during synthesis. See the console for details.');
+            }
+        });
+    </script>
+</body>
+</html>
