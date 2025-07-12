@@ -28,12 +28,11 @@
 
             // Get SID and scales from the UI
             const sid = 0; // Example speaker ID
-            const scales = [0.667, 1.0, 0.8]; // Example scales [noise, length, noise_w]
 
             try {
                 const nixTTS = new tts.NixTTS(modelUrls, tts.TOKENIZER_STATE);
                 await nixTTS.init();
-                const audioData = await nixTTS.vocalize(text, sid, scales);
+                const audioData = await nixTTS.vocalize(text, sid);
                 tts.playAudio(audioData);
             } catch (error) {
                 console.error('Error during TTS synthesis:', error);

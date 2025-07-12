@@ -76,7 +76,7 @@ export class NixTTS {
         this.decoder = await ort.InferenceSession.create(this.modelUrls.decoder);
     }
 
-    async vocalize(text, sid, scales) {
+    async vocalize(text, sid) {
         // Tokenize the input text
         const [tokens, tokenLengths, phonemes] = await this.tokenizer.tokenize([text]);
         const flattenedTokens = tokens.flat();
@@ -85,13 +85,10 @@ export class NixTTS {
         // Create input tensors for the encoder
         const c = new ort.Tensor('int64', BigInt64Array.from(flattenedTokens.map(BigInt)), [tokens.length, maxTokenLength]);
         const c_lengths = new ort.Tensor('int64', BigInt64Array.from(tokenLengths.map(BigInt)), [tokenLengths.length]);
-        const scales_tensor = new ort.Tensor('float32', Float32Array.from(scales), [3]);
-
         // Run the encoder model
         const encoderFeeds = {
             c: c,
-            c_lengths: c_lengths,
-            scales: scales_tensor
+            c_lengths: c_lengths
         };
         const encoderResults = await this.encoder.run(encoderFeeds);
 
@@ -112,7 +109,7 @@ export class NixTTS {
 
         // Create speaker embedding tensor
         const g = new ort.Tensor('int64', BigInt64Array.from([BigInt(sid)]), [1]);
-        
+
         // Run the decoder model
         const decoderFeeds = {
             x: z,
