@@ -76,20 +76,51 @@ export class NixTTS {
         this.decoder = await ort.InferenceSession.create(this.modelUrls.decoder);
     }
 
-    async vocalize(text) {
+    async vocalize(text, sid, scales) {
+        // Tokenize the input text
         const [tokens, tokenLengths, phonemes] = await this.tokenizer.tokenize([text]);
-
         const flattenedTokens = tokens.flat();
-        const c = new ort.Tensor('int64', BigInt64Array.from(flattenedTokens.map(BigInt)), [tokens.length, flattenedTokens.length / tokens.length]);
+        const maxTokenLength = flattenedTokens.length / tokens.length;
+
+        // Create input tensors for the encoder
+        const c = new ort.Tensor('int64', BigInt64Array.from(flattenedTokens.map(BigInt)), [tokens.length, maxTokenLength]);
         const c_lengths = new ort.Tensor('int64', BigInt64Array.from(tokenLengths.map(BigInt)), [tokenLengths.length]);
+        const scales_tensor = new ort.Tensor('float32', Float32Array.from(scales), [3]);
 
-        const encoderFeeds = { c: c, c_lengths: c_lengths };
+        // Run the encoder model
+        const encoderFeeds = {
+            c: c,
+            c_lengths: c_lengths,
+            scales: scales_tensor
+        };
         const encoderResults = await this.encoder.run(encoderFeeds);
-        const z = encoderResults[Object.keys(encoderResults)[2]];
 
-        const decoderFeeds = { z: z };
+        // Extract encoder outputs
+        const mu_z = encoderResults.mu_z;
+        const logsig_z = encoderResults.logsig_z;
+        const z = encoderResults.z;
+        const d_rounded = encoderResults.d_rounded;
+
+        // Create masks for the decoder input
+        const y_max_length = d_rounded.dims[2];
+        const y_lengths = d_rounded.data.reduce((a, b) => a + b, 0);
+        const x_masks = new ort.Tensor(
+            'bool',
+            Array(y_max_length).fill(true),
+            [1, 1, y_max_length]
+        );
+
+        // Create speaker embedding tensor
+        const g = new ort.Tensor('int64', BigInt64Array.from([BigInt(sid)]), [1]);
+        
+        // Run the decoder model
+        const decoderFeeds = {
+            x: z,
+            x_masks: x_masks,
+            g: g,
+        };
         const decoderResults = await this.decoder.run(decoderFeeds);
-        const xw = decoderResults[Object.keys(decoderResults)[0]];
+        const xw = decoderResults.xw;
 
         return xw.data;
     }
