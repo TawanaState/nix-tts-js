@@ -26,10 +26,13 @@
                 decoder: '/model/decoder.onnx'
             };
 
+            // Get SID and scales from the UI
+            const sid = 0; // Example speaker ID
+
             try {
                 const nixTTS = new tts.NixTTS(modelUrls, tts.TOKENIZER_STATE);
                 await nixTTS.init();
-                const audioData = await nixTTS.vocalize(text);
+                const audioData = await nixTTS.vocalize(text, sid);
                 tts.playAudio(audioData);
             } catch (error) {
                 console.error('Error during TTS synthesis:', error);
