@@ -79,15 +79,17 @@ export class NixTTS {
     async vocalize(text, sid) {
         // Tokenize the input text
         const [tokens, tokenLengths, phonemes] = await this.tokenizer.tokenize([text]);
-        const [paddedTokens, tokensLengths] = await this.tokenizer.tokenize([text]);
+        const [paddedTokens, tokensLengths, phonemes] = await this.tokenizer.tokenize([text]);
         const maxTokenLength = paddedTokens[0].length;
         const flattenedTokens = paddedTokens.flat();
         const c = new ort.Tensor('int64', BigInt64Array.from(flattenedTokens.map(BigInt)), [paddedTokens.length, maxTokenLength]);
-        const c_lengths = new ort.Tensor('int64', BigInt64Array.from(tokenLengths.map(BigInt)), [tokenLengths.length]);
+        const c_lengths = new ort.Tensor('int64', BigInt64Array.from(tokensLengths.map(BigInt)), [tokensLengths.length]);
         // Run the encoder model
         const encoderFeeds = {
             c: c,
-            c_lengths: c_lengths
+            c_lengths: c_lengths,
+            // scales: new ort.Tensor('float32', [1, 1, 1]),
+            // sid: new ort.Tensor('int64', [sid])
         };
         const encoderResults = await this.encoder.run(encoderFeeds);
 
@@ -109,12 +111,12 @@ export class NixTTS {
 
         // Run the decoder model
         const decoderFeeds = {
-            x: encoderResults['z'],
+            x: z,
             x_masks: encoderResults['x_masks'],
             g: g,
         };
         const decoderResults = await this.decoder.run(decoderFeeds);
-        const xw = decoderResults.xw;
+        const xw = decoderResults['xw'];
 
         return xw.data;
     }
