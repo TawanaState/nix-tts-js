@@ -90,20 +90,15 @@ export class NixTTS {
             c_lengths: c_lengths
         };
         const encoderResults = await this.encoder.run(encoderFeeds);
-
+        console.log('encoderResults', encoderResults)
         // Extract encoder outputs
         const mu_z = encoderResults.mu_z;
         const logsig_z = encoderResults.logsig_z;
         const z = encoderResults.z;
-        const d_rounded = encoderResults.d_rounded;
-
-        console.log("mu_z", mu_z);
-        console.log("logsig_z", logsig_z);
-        console.log("z", z);
-        console.log("d_rounded", d_rounded);
+        const d_rounded = encoderResults.duration_rounded;
 
         // Create masks for the decoder input
-        const y_max_length = d_rounded.dims[1];
+        const y_max_length = d_rounded.dims[2];
         const y_lengths = d_rounded.data.reduce((a, b) => a + b, 0);
         const x_masks = new ort.Tensor(
             'bool',
