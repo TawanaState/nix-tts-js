@@ -107,14 +107,10 @@ export class NixTTS {
             [1, 1, y_lengths]
         );*/
 
-        // Create speaker embedding tensor
-        const g = new ort.Tensor('int64', BigInt64Array.from([BigInt(sid)]));
-
+        
         // Run the decoder model
         const decoderFeeds = {z: z};
         const decoderResults = await this.decoder.run(decoderFeeds);
-        //const xw = decoderResults['xw'];
-        console.log(decoderResults)
         return decoderResults.raw_audio.cpuData;
     }
 }
